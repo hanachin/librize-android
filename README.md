@@ -1,7 +1,7 @@
-音声はBrainstorm様のサウンドアイコンを使用しています。
+音声は[brainstorm](http://www.brainstorm-inc.jp/)様のサウンドアイコンを使用しています。
 音声ファイルの利用許諾についてはそちらを参照ください。
 
-!(Brainstorm logo)[http://www.brainstorm-inc.jp/image/logoyoko.gif]
+![Brainstorm logo](http://www.brainstorm-inc.jp/image/logoyoko.gif)
 SOUNDICONS by Brainstorm,co.ltd.
 
 Welcome to your Appcelerator Titanium Mobile Project
