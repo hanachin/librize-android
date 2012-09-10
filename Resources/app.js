@@ -1,95 +1,47 @@
 // this sets the background color of the master UIView (when there are no windows/tab groups on it)
 var titaniumBarcode = require('com.mwaysolutions.barcode');
-var UDP = require('ti.udp');
 
-var Setting = {
-    store: function (key, data) {
-        var fileName = 'setting.txt';
-        var file = Ti.Filesystem.getFile(Titanium.Filesystem.applicationDataDirectory, fileName);
-        var contents = file.read();
-        if (contents == '') {
-            contents = '{}';
-        }
-        var settings = JSON.parse(contents);
-        settings[key] = data;
-        file.write(JSON.stringify(settings));
-        return data;
-    },
-    load: function (key) {
-        var fileName = 'setting.txt';
-        var file = Ti.Filesystem.getFile(Titanium.Filesystem.applicationDataDirectory, fileName);
-        var contents = file.read();
-        if (contents == '') {
-            contents = '{}';
-        }
-        var settings = JSON.parse(contents);
-        return settings[key];
-    }
-};
+var win = Titanium.UI.createWindow({
+    title:'Librize',
+    backgroundColor:'#fff'
+});
 
-function settingWindow() {
-    var setting_win = Ti.UI.createWindow({
-        title:'Librize',
-        backgroundColor:'#fff'
-    });
-    
-    var broadcast_tf = Ti.UI.createTextField({
-        top: 10,
-        left: 10,
-        hintText: 'broadcast address',
-        value: Setting.load('broadcast_ip')
-    });
-    setting_win.add(broadcast_tf);
-    
-    var port_tf = Ti.UI.createTextField({
-        top: 100,
-        left: 10,
-        hintText: 'port',
-        value: Setting.load('port')
-    });
-    setting_win.add(port_tf);
-    
-    var save_button = Ti.UI.createButton({
-        top: 200,
-        left: 10,
-        width: 200,
-        title: 'save'
-    });
-    
-    save_button.addEventListener('click', function (e) {
-        if (!broadcast_tf.value || !port_tf.value) {
-            alert('please input broad cast ip address and port number.');
-            return;
-        }
-        Setting.store('broadcast_ip', broadcast_tf.value);
-        Setting.store('port', port_tf.value);
-        setting_win.close();
-    });
-    
-    setting_win.add(save_button);
-    
-    setting_win.open();
-}
+var web = Ti.UI.createWebView({
+    top: 120,
+    height: '100%',
+    width: '100%'
+});
 
-function scan(continues) {
+web.userAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_7_4) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/21.0.1180.89 Safari/537.1';
+
+web.url = 'http://librize.com/';
+
+win.add(web);
+
+var barcodeLabel = Titanium.UI.createLabel({
+    color: '#000',
+    backgroundColor: '#fff',
+    top: 0,
+    text: 'N/A',
+    textAlign: 'center',
+    font: { fontSize:48 },
+    width: '100%',
+    height: '60px'
+});
+  
+win.add(barcodeLabel);
+
+function scan() {
     titaniumBarcode.scan({
         success: function (data) {
           if(data && data.barcode) {
             barcodeLabel.text = data.barcode;
-            
-            var socket = UDP.createSocket();
-            socket.start({ port: parseInt(Setting.load('port')) });
-            socket.sendString({ host: Setting.load('broadcast_ip'), data: data.barcode });
-            socket.stop();
+            web.evalJS("document.getElementById('place_item_code').value='" + data.barcode + "';");
+            web.evalJS("document.getElementById('new_place_item').submit()");
             
             // http://www.brainstorm-inc.jp/faq.html
             var sound = Ti.Media.createSound({
-                url:'Alarm0070.mp3'
-            });
-            sound.addEventListener('complete', function () {
-                if (continues) {
-                    scan(true);
-                }
+                url:'Alarm0070.x    mp3'
             });
             sound.start();
           } else {
@@ -107,57 +59,19 @@ function scan(continues) {
       });
 }
 
-var win = Titanium.UI.createWindow({  
-    title:'Librize',
-    backgroundColor:'#fff'
-});
-
-var barcodeLabel = Titanium.UI.createLabel({
-    color: '#000',
+var scanButton = Titanium.UI.createButton({
+    title: 'Scan barcode',
     top: 60,
-    text: 'N/A',
-    textAlign: 'center',
-    font: { fontSize:48 },
-    width: 'auto'
-});
-  
-win.add(barcodeLabel);
-
-var scanOnceButton = Titanium.UI.createButton({
-    title: 'Scan barcode once',
-    top: 200
+    left: 0,
+    width: '100%',
+    height: '60px'
 });
 
-scanOnceButton.addEventListener('click', function (e) {
-    scan(false);
+scanButton.addEventListener('click', function (e) {
+    scan();
 });
 
-win.add(scanOnceButton);
-
-var scanContinuesButton = Titanium.UI.createButton({
-    title: 'Scan barcode continues',
-    top: 300
-});
-
-scanContinuesButton.addEventListener('click', function (e) {
-    scan(true);
-});
-
-win.add(scanContinuesButton);
-
-var settingButton = Titanium.UI.createButton({
-    title: 'Setting',
-    top: 400
-});
-
-settingButton.addEventListener('click', function (e) {
-    settingWindow();
-});
-
-win.add(settingButton);
+win.add(scanButton);
 
 win.open();
 
-if (!Setting.load('broadcast_ip') || !Setting.load('port')) {
-    settingWindow();
-}
